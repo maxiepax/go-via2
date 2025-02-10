@@ -23,3 +23,13 @@ go.work.sum
 
 # env file
 .env
+cert/ca.crt
+cert/ca.key
+cert/server.crt
+cert/server.key
+database/sqlite-database.db
+images/*
+images/
+scripts/*
+secret/secret.key
+go.sum
