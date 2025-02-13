@@ -11,6 +11,7 @@ import (
 	"github.com/maxiepax/go-via2/api"
 	ca "github.com/maxiepax/go-via2/crypto"
 	"github.com/maxiepax/go-via2/db"
+	"github.com/maxiepax/go-via2/dhcp"
 	"github.com/maxiepax/go-via2/models"
 	"github.com/maxiepax/go-via2/secrets"
 	"github.com/maxiepax/go-via2/websockets"
@@ -74,6 +75,9 @@ func main() {
 	jsonConfig, _ := io.ReadAll(jsonFile)
 	var config Config
 	json.Unmarshal(jsonConfig, &config)
+
+	// start DHCPd
+	go dhcp.IPv4()
 
 	// start gin setup
 
