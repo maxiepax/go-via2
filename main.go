@@ -30,6 +30,7 @@ var (
 type Config struct {
 	Debug   bool
 	Port    int `default:"8443"`
+	Interfaces []string
 }
 
 func main() {
@@ -77,7 +78,9 @@ func main() {
 	json.Unmarshal(jsonConfig, &config)
 
 	// start DHCPd
-	go dhcp.IPv4()
+	for _ , v := range config.Interfaces {
+		go dhcp.IPv4(v)
+	}
 
 	// start gin setup
 

@@ -7,6 +7,7 @@ import (
 type HostForm struct {
 
 	IP				string		`json:"ip" gorm:"type:varchar(15);not null;index:uniqIp,unique"`
+	Mac				string		`json:"mac" gorm:"type:varchar(17);not null"`
 	Hostname 		string		`json:"hostname" gorm:"type:varchar(255)"`
 	Domain			string		`json:"domain" gorm:"type:varchar(255)"`
 	Reimage			bool		`json:"reimage" gorm:"type:bool;index:uniqIp,unique"`
