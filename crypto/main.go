@@ -15,6 +15,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func Load() {
+	crt, err := os.Stat("./cert/server.crt")
+	if os.IsNotExist(err) {
+		// create folder for certificates
+		logrus.WithFields(logrus.Fields{
+			"certificate": "server.crt does not exist, initiating new CA and creating self-signed ceritificate server.crt",
+		}).Info("certificate")
+		os.MkdirAll("cert", os.ModePerm)
+		CreateCA()
+		CreateCert("./cert", "server", "server")
+	} else {
+		logrus.WithFields(logrus.Fields{
+			crt.Name(): "server.crt found",
+		}).Info("certificate")
+	}
+}
+
 func CreateCA() {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(1653),
@@ -48,8 +65,8 @@ func CreateCA() {
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: ca_b})
 	certOut.Close()
 	logrus.WithFields(logrus.Fields{
-		"cert": "ca.pem created",
-	}).Info("cert")
+		"certificate": "ca.pem created",
+	}).Info("certificate")
 
 	// Private key
 	keyOut, err := os.OpenFile("cert/ca.key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -59,8 +76,8 @@ func CreateCA() {
 	pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
 	keyOut.Close()
 	logrus.WithFields(logrus.Fields{
-		"cert": "ca.key created",
-	}).Info("cert")
+		"certificate": "ca.key created",
+	}).Info("certificate")
 }
 
 func CreateCert(path string, name string, cn string) {
@@ -113,7 +130,7 @@ func CreateCert(path string, name string, cn string) {
 	certOut.Close()
 	logrus.WithFields(logrus.Fields{
 		"cert": path + "/" + name + ".crt created",
-	}).Info("cert")
+	}).Info("certificate")
 
 	// Private key
 	keyOut, err := os.OpenFile(path+"/"+name+".key", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -124,6 +141,6 @@ func CreateCert(path string, name string, cn string) {
 	keyOut.Close()
 	logrus.WithFields(logrus.Fields{
 		"cert": path + "/" + name + ".key created",
-	}).Info("cert")
+	}).Info("certificate")
 
 }

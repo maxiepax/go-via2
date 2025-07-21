@@ -1,23 +1,21 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
-
-	"github.com/maxiepax/go-via2/api"
-	ca "github.com/maxiepax/go-via2/crypto"
-	"github.com/maxiepax/go-via2/db"
-	"github.com/maxiepax/go-via2/dhcp"
-	"github.com/maxiepax/go-via2/models"
-	"github.com/maxiepax/go-via2/secrets"
-	"github.com/maxiepax/go-via2/websockets"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/maxiepax/go-via2/api"
+	"github.com/maxiepax/go-via2/config"
+	ca "github.com/maxiepax/go-via2/crypto"
+	"github.com/maxiepax/go-via2/db"
+	"github.com/maxiepax/go-via2/dhcp"
+
+	"github.com/maxiepax/go-via2/models"
+	"github.com/maxiepax/go-via2/secrets"
+	"github.com/maxiepax/go-via2/websockets"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,8 +35,6 @@ func main() {
 
 	logServer := websockets.NewLogServer()
 	logrus.AddHook(logServer.Hook)
-
-	//setup logging
 	logrus.WithFields(logrus.Fields{
 		"version": version,
 		"commit":  commit,
@@ -47,7 +43,7 @@ func main() {
 
 	db.Connect(true)
 
-	//migrate all models
+	//migrate models
 	err := db.DB.AutoMigrate(&models.Host{}, models.Group{}, &models.Image{}, &models.User{})
 	if err != nil {
 		log.Fatal(err)
@@ -63,33 +59,26 @@ func main() {
 	// load secrets key
 	key := secrets.Init()
 
-	router := gin.New()
-	router.Use(cors.Default())
-
 	// load config file
-	jsonFile, err := os.Open("config.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer jsonFile.Close()
-
-	jsonConfig, _ := io.ReadAll(jsonFile)
-	var config Config
-	json.Unmarshal(jsonConfig, &config)
+	conf := config.Load()
 
 	// start DHCPd
-	for _ , v := range config.Interfaces {
-		go dhcp.IPv4(v)
+	if !conf.DisableDhcp {
+		for _, v := range conf.Network.Interfaces {
+			go dhcpd.IPv4(v)
+		}
 	}
 
 	// start gin setup
+	router := gin.New()
+	router.Use(cors.Default())
 
 	// ks.cfg is served at top to not place it behind BasicAuth
 	router.GET("ks.cfg", api.Ks(key))
 
 	esx := router.Group("/")
 		{
-		esx.GET("/esx/*all", api.FileHandler(config.Port))
+		esx.GET("/esx/*all", api.FileHandler(conf.Port))
 		}
 
 	// middleware to check if user is logged in
@@ -158,10 +147,10 @@ func main() {
 
 			images := v1.Group("/images")
 			{
-			images.GET("", api.GetImages)
-			images.GET(":id", api.GetImage)
-			images.POST("", api.CreateImage)
-			images.DELETE(":id", api.DeleteImage)
+				images.GET("", api.GetImages)
+				images.GET(":id", api.GetImage)
+				images.POST("", api.CreateImage)
+				images.DELETE(":id", api.DeleteImage)
 			}
 
 		v1.GET("log", logServer.Handle)
@@ -170,22 +159,10 @@ func main() {
 	}
 
 	// check if ./cert/server.crt exists, if not we will create the folder, and initiate a new CA and a self-signed certificate
-	crt, err := os.Stat("./cert/server.crt")
-	if os.IsNotExist(err) {
-		// create folder for certificates
-		logrus.WithFields(logrus.Fields{
-			"certificate": "server.crt does not exist, initiating new CA and creating self-signed ceritificate server.crt",
-		}).Info("cert")
-		os.MkdirAll("cert", os.ModePerm)
-		ca.CreateCA()
-		ca.CreateCert("./cert", "server", "server")
-	} else {
-		logrus.WithFields(logrus.Fields{
-			crt.Name(): "server.crt found",
-		}).Info("cert")
-	}
+	ca.Load()
+
 	//enable HTTPS
-	listen := ":" + strconv.Itoa(config.Port)
+	listen := ":" + strconv.Itoa(conf.Port)
 	logrus.WithFields(logrus.Fields{
 		"port": listen,
 	}).Info("Webserver")

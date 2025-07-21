@@ -33,3 +33,4 @@ images/
 scripts/*
 secret/secret.key
 go.sum
+config.json
