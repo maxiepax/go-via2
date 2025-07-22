@@ -11,8 +11,7 @@ import (
 	"github.com/maxiepax/go-via2/config"
 	ca "github.com/maxiepax/go-via2/crypto"
 	"github.com/maxiepax/go-via2/db"
-	"github.com/maxiepax/go-via2/dhcp"
-
+	"github.com/maxiepax/go-via2/dhcpd"
 	"github.com/maxiepax/go-via2/models"
 	"github.com/maxiepax/go-via2/secrets"
 	"github.com/maxiepax/go-via2/websockets"
@@ -62,7 +61,7 @@ func main() {
 	// load config file
 	conf := config.Load()
 
-	// start DHCPd
+	// start d
 	if !conf.DisableDhcp {
 		for _, v := range conf.Network.Interfaces {
 			go dhcpd.IPv4(v)
