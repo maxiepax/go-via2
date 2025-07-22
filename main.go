@@ -16,6 +16,7 @@ import (
 	"github.com/maxiepax/go-via2/secrets"
 	"github.com/maxiepax/go-via2/websockets"
 	"github.com/sirupsen/logrus"
+	"github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -61,7 +62,7 @@ func main() {
 	// load config file
 	conf := config.Load()
 
-	// start d
+	// start dhcpd
 	if !conf.DisableDhcp {
 		for _, v := range conf.Network.Interfaces {
 			go dhcpd.IPv4(v)

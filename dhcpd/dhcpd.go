@@ -31,7 +31,7 @@ func IPv4(intf string) {
 	}
 
 	// Find the ip-address
-	ip, ipNet, err := findIPv4Addr(ifi)
+	ip, ipNet, err := FindIPv4Addr(ifi)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"if":  intf,
@@ -197,7 +197,7 @@ func buildHeaders(mac net.HardwareAddr, ip net.IP, srcEth *layers.Ethernet, srcI
 	return []gopacket.SerializableLayer{eth, ip4, udp}
 }
 
-func findIPv4Addr(ifi *net.Interface) (net.IP, *net.IPNet, error) {
+func FindIPv4Addr(ifi *net.Interface) (net.IP, *net.IPNet, error) {
 	addrs, err := ifi.Addrs()
 	if err != nil {
 		return nil, nil, err

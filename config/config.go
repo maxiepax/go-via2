@@ -2,9 +2,11 @@ package config
 
 import (
 	"flag"
+	"net"
 
 	"github.com/koding/multiconfig"
 	"github.com/sirupsen/logrus"
+	"github.com/maxiepax/go-via2/dhcpd"
 )
 
 type Config struct {
@@ -58,6 +60,35 @@ func Load() *Config {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 		}).Fatalf("failed to load config")
+	}
+
+	if len(c.Network.Interfaces) == 0 {
+		logrus.Warning("no interfaces have been configured, trying to find interfaces to serve to, will serve on all.")
+		i, err := net.Interfaces()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"err": err,
+			}).Info("failed to find a usable interface")
+		}
+		for _, v := range i {
+			// dont use loopback interfaces
+			if v.Flags&net.FlagLoopback != 0 {
+				continue
+			}
+			// dont use ptp interfaces
+			if v.Flags&net.FlagPointToPoint != 0 {
+				continue
+			}
+			_, _, err := dhcpd.FindIPv4Addr(&v)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":   err,
+					"iface": v.Name,
+				}).Warning("interface does not have a usable ipv4 address")
+				continue
+			}
+			c.Network.Interfaces = append(c.Network.Interfaces, v.Name)
+		}
 	}
 
 	conf = c

@@ -3,6 +3,7 @@ module github.com/maxiepax/go-via2
 go 1.21.6
 
 require (
+	dario.cat/mergo v1.0.2
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0
@@ -18,7 +19,6 @@ require (
 )
 
 require (
-	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/bytedance/sonic v1.12.6 // indirect
